@@ -3,11 +3,15 @@
 # nuwa (Xiaomi 13 Pro, SM8550) one that ships in Binaries/nuwa, and every vendor
 # entry is gated behind FUXI_VENDOR_HW until a fuxi dump is imported. At
 # FUXI_VENDOR_HW = 0 only the Mu and fuxiPkg drivers are built into the volume.
+# The raw configuration files below belong to vendor drivers (security, PIL,
+# charger) and are gated with them, so a Mu-only build needs no vendor dump.
 
+!if $(FUXI_VENDOR_HW) == 1
   FILE FREEFORM = A1E235DE-E825-4591-9623-C43175811826 {
     SECTION UI = "SecParti.cfg"
     SECTION RAW = Binaries/nuwa/RawFiles/SecParti.cfg
   }
+!endif
 
 !if $(USE_CUSTOM_DISPLAY_DRIVER) == 1
   FILE FREEFORM = 8CAE2C55-FC5A-410B-812B-8CA22F572F36 {
@@ -251,6 +255,7 @@
   }
 !endif
 
+!if $(FUXI_VENDOR_HW) == 1
   FILE FREEFORM = 21E9BDD9-6C3F-4F10-84A5-BBEC322741F1 {
     SECTION UI = "uefipil.cfg"
     SECTION RAW = Binaries/nuwa/RawFiles/uefipil.cfg
@@ -260,3 +265,4 @@
     SECTION UI = "QcomChargerCfg.cfg"
     SECTION RAW = Binaries/nuwa/RawFiles/QcomChargerCfg.cfg
   }
+!endif
