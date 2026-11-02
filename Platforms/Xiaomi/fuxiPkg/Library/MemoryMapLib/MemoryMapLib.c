@@ -10,6 +10,8 @@
 //
 // Conventional memory: the device tree's /memory entries minus every fixed
 // carveout and minus the UEFI window below, computed mechanically, not guessed.
+// Above 4 GiB /memory is not the same on every unit, so the high rows keep only
+// what is RAM on both measured units (see the comment above those rows).
 //
 // UEFI window: the SM8550 layout shared with nuwaPkg/shengPkg (FD at 0xA7100000
 // with the 3 MiB size from Resources/Configs/fuxi.toml, the stack at 0xA760D000
@@ -107,9 +109,27 @@ STATIC EFI_MEMORY_REGION_DESCRIPTOR gMemoryDescriptor[] = {
   {"DRAM 0xe7cb0000", 0xE7CB0000, 0xFE4C000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv, WRITE_BACK_XN},   // DT /memory minus carveouts
   {"DRAM 0xfc400000", 0xFC400000, 0x3400000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv, WRITE_BACK_XN},   // DT /memory minus carveouts
   {"DRAM 0xffe00000", 0xFFE00000, 0x200000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv, WRITE_BACK_XN},   // DT /memory minus carveouts
-  {"DRAM 0x880000000", 0x880000000, 0x3B300000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv, WRITE_BACK_XN},   // DT /memory minus carveouts
-  {"DRAM 0x8bb500000", 0x8BB500000, 0x1E00000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv, WRITE_BACK_XN},   // DT /memory minus carveouts
-  {"DRAM 0x8c0000000", 0x8C0000000, 0x140000000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv, WRITE_BACK_XN},   // DT /memory minus carveouts
+  // High DRAM: only what is RAM on both measured units, because the holes the boot chain leaves in /memory just below
+  // 0x8C0000000 differ between units, and touching one is a synchronous external abort on SM8550 (see the comment
+  // above "DRAM bank 1 low" in shengPkg's MemoryMapLib). /memory from 0x880000000 up:
+  //   8 GB unit:  0x880000000-0x8BB2FFFFF  0x8BB500000-0x8BD2FFFFF  0x8C0000000-0x9FFFFFFFF
+  //               (FdtBlob/sm8550-xiaomi-fuxi.dtb, ddr_size 8, the tree the rows above come from)
+  //   12 GB unit: 0x880000000-0x8B9CFFFFF  0x8B9F00000-0x8BBCFFFFF  0x8C0000000-0xAFFFFFFFF
+  //               (/sys/firmware/fdt read with root on 2026-11-02 under OS4.0.0.32: ddr_size 0xc, 815,061 B, sha256
+  //               d458ebc1abeeaf1b48778387be99b577f4507d5463b9fa48489456b2262bbc69; /proc/iomem read with it lists
+  //               System RAM 880000000-8b9cfffff, 8b9f00000-8bbcfffff and 8c0000000-affffefff)
+  // Both units have a 2 MiB hole, 30 MiB of RAM and a hole up to 0x8C0000000 there; on the 12 GB unit all three start
+  // 22 MiB lower. So the first row ends at the lower hole of the 12 GB unit and nothing from there to 0x8C0000000 is
+  // listed, not even the 28 MiB that is RAM on both units next to the moving holes (shengPkg likewise lists nothing
+  // from its faulting address 0x8BB300000 up to 0x8C0000000). The row at 0x8C0000000 is RAM on both units and holds
+  // DarwinBoot's XNU window (kernel at pa 0x8C007C000).
+  // The rows are static on purpose: clipping them at boot against the /memory node the ABL passes in x0 would also
+  // cover units nobody has measured, but SEC builds the memory HOBs and the page tables from this table before the
+  // MMU is on, so it would take an FDT parser in the shared SiliciumPkg SEC path, and these rows would still be
+  // needed for a boot without a tree. A unit whose /proc/iomem leaves out part of these rows has to be measured and
+  // the rows narrowed to it.
+  {"DRAM 0x880000000", 0x880000000, 0x39D00000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv, WRITE_BACK_XN},   // RAM on both measured units
+  {"DRAM 0x8c0000000", 0x8C0000000, 0x140000000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv, WRITE_BACK_XN},   // RAM on both measured units
   {"IMEM Base", 0x14680000, 0x2A000, NoHob, MMAP_IO, INITIALIZED, Conv, NS_DEVICE},   // SM8550 SoC
   {"IMEM Cookie Base", 0x146AA000, 0x16000, AddDev, MMAP_IO, INITIALIZED, Conv, NS_DEVICE},   // SM8550 SoC
   {"IPC_ROUTER_TOP", 0x400000, 0x100000, AddDev, MMAP_IO, UNCACHEABLE, MmIO, NS_DEVICE},   // SM8550 SoC
