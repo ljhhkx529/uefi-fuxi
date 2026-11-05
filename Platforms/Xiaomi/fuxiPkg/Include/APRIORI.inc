@@ -114,6 +114,15 @@ APRIORI DXE {
   INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
+!if $(FUXI_USB_DEVICE) == 1
+  # fuxi's own USB device stack, extracted from the stock uefi_a image.
+  INF Binaries/fuxi/QcomPkg/Drivers/UsbPwrCtrlDxe/UsbPwrCtrlDxe.inf
+  INF Binaries/fuxi/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
+  INF Binaries/fuxi/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
+  INF Binaries/fuxi/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
+  INF Binaries/fuxi/QcomPkg/Drivers/UsbInitDxe/UsbInitDxe.inf
+!endif
+
 !if $(FUXI_VENDOR_HW) == 1
   INF Binaries/nuwa/QcomPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
   INF Binaries/nuwa/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf

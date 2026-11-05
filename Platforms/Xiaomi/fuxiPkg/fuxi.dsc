@@ -34,6 +34,16 @@
   FUXI_VENDOR_HW                = 0
 
   #
+  # Load fuxi's own USB device stack (UsbPwrCtrlDxe, UsbfnDwc3Dxe, UsbDeviceDxe,
+  # UsbConfigDxe, UsbInitDxe) extracted from the stock uefi_a partition into
+  # Binaries/fuxi. It powers the controller, trains the PHY and leaves the DWC3
+  # in device mode, which is the state the XNU QcomXnuUsbDebug driver inherits.
+  # Kept separate from FUXI_VENDOR_HW so the rest of the vendor chain (SMEM,
+  # clocks, RPMh, UFS, charger) stays out and the panel keeps scanning out.
+  #
+  FUXI_USB_DEVICE               = 1
+
+  #
   # 0 = SM8550-AB
   # 1 = SM8550-AC
   #
